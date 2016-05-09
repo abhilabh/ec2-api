@@ -59,7 +59,7 @@ def allocate_address(context, domain=None):
 
 def associate_address(context, public_ip=None, instance_id=None,
                       allocation_id=None, network_interface_id=None,
-                      private_ip_address=None, allow_reassociation=False):
+                      private_ip_address=None):
     if not public_ip and not allocation_id:
         msg = _('Either public IP or allocation id must be specified')
         raise exception.MissingParameter(msg)
@@ -73,7 +73,7 @@ def associate_address(context, public_ip=None, instance_id=None,
     associationId = address_engine.associate_address(
         context, public_ip, instance_id,
         allocation_id, network_interface_id,
-        private_ip_address, allow_reassociation)
+        private_ip_address)
     if associationId:
         return {'return': True,
                 'associationId': associationId}
@@ -266,7 +266,7 @@ class AddressEngineNeutron(object):
 
     def associate_address(self, context, public_ip=None, instance_id=None,
                           allocation_id=None, network_interface_id=None,
-                          private_ip_address=None, allow_reassociation=False):
+                          private_ip_address=None):
         instance_network_interfaces = []
         if instance_id:
             # TODO(ft): implement search in DB layer
@@ -295,8 +295,7 @@ class AddressEngineNeutron(object):
                     context, public_ip=public_ip, instance_id=instance_id,
                     allocation_id=allocation_id,
                     network_interface_id=network_interface_id,
-                    private_ip_address=private_ip_address,
-                    allow_reassociation=allow_reassociation)
+                    private_ip_address=private_ip_address)
 
         if instance_id:
             if not instance_network_interfaces:
@@ -322,7 +321,7 @@ class AddressEngineNeutron(object):
         if address.get('network_interface_id') == network_interface['id']:
             # NOTE(ft): idempotent call
             pass
-        elif address.get('network_interface_id') and not allow_reassociation:
+        elif address.get('network_interface_id'):
             msg = _('resource %(eipalloc_id)s is already associated with '
                     'associate-id %(eipassoc_id)s')
             msg = msg % {'eipalloc_id': allocation_id,
@@ -419,7 +418,7 @@ class AddressEngineNova(object):
 
     def associate_address(self, context, public_ip=None, instance_id=None,
                           allocation_id=None, network_interface_id=None,
-                          private_ip_address=None, allow_reassociation=False):
+                          private_ip_address=None):
         os_instance_id = ec2utils.get_db_item(context, instance_id)['os_id']
         # NOTE(ft): check the public IP exists to raise AWS exception otherwise
         self.get_nova_ip_by_public_ip(context, public_ip)
